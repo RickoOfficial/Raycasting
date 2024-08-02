@@ -69,3 +69,14 @@ export const throwRay = (startPos: Vector2, angle: number) => {
 		return p3.add(initialAngle.copy().mult(-2))
 	}
 }
+
+export const map = (number: number, inMin: number, inMax: number, outMin: number, outMax: number, clamp: boolean = false): number => {
+	const normalized = (number - inMin) / (inMax - inMin)
+	const scaled = normalized * (outMax - outMin) + outMin
+
+	if (clamp) {
+		return Math.min(Math.max(scaled, outMin), outMax)
+	}
+
+	return scaled
+}

@@ -1,14 +1,14 @@
 import { canvasSize, mousePosition } from '../globals'
-import { modifyContextByWorld, resetContextByWorld } from '../utils/draw'
+import { modifyContextByWorld, rect, resetContextByWorld } from '../utils/draw'
 import { Events } from '../utils/Events'
 import { vectorToWorld } from '../utils/math'
 import { Random } from '../utils/Random'
 import { Vector2 } from '../utils/Vector2'
 import { WorldCell, WorldCellType } from './WorldCell'
 
-export const WORLD_COLS = 20
-export const WORLD_ROWS = 20
-export const WORLD_SIZE = new Vector2(canvasSize().y, canvasSize().y).sub(32)
+export const WORLD_COLS = 10
+export const WORLD_ROWS = 10
+export const WORLD_SIZE = new Vector2(canvasSize().y, canvasSize().y).div(4)
 export const WORLD_POS = new Vector2(16, 16)
 
 export class World {
@@ -89,7 +89,7 @@ export class World {
 
 	draw(ctx: CanvasRenderingContext2D) {
 		ctx.fillStyle = '#181818'
-		ctx.rect(this.pos.x, this.pos.y, this.size.x, this.size.y)
+		rect(ctx, ...this.pos.array(), ...this.size.array())
 		ctx.fill()
 
 		modifyContextByWorld(ctx)

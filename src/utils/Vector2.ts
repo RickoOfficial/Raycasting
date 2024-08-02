@@ -73,11 +73,11 @@ export class Vector2 {
 		let result: number = 0
 
 		if (vectorOrX instanceof Vector2) {
-			result = vectorOrX.copy().sub(this.copy()).length()
+			result = vectorOrX.copy().sub(this).length()
 		}
 
 		if (typeof vectorOrX === 'number') {
-			result = new Vector2(vectorOrX, y!).sub(this.copy()).length()
+			result = new Vector2(vectorOrX, y!).sub(this).length()
 		}
 
 		return result

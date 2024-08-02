@@ -23,18 +23,34 @@ const draw = (timestamp?: number) => {
 	CONTEXT.fillRect(0, 0, ...canvasSize().array())
 
 	world.update()
-	world.draw(CONTEXT)
 
 	for (let i = 0; i < Player.players.length; i++) {
 		Player.players[i].update()
 		Player.players[i].draw(CONTEXT)
 	}
 
+	world.draw(CONTEXT)
+
+	for (let i = 0; i < Player.players.length; i++) {
+		Player.players[i].drawOnMinimap(CONTEXT)
+	}
+
 	CONTEXT.font = '16px monospace'
 	CONTEXT.fillStyle = '#fff'
 	CONTEXT.fillText(Math.round(fps).toString(), 16, 16)
 
+	// throw new Error('')
 	requestAnimationFrame(draw)
 }
+
+const button = document.createElement('button')
+button.className = 'button fixed top-2 right-2'
+button.innerText = 'Управление мышкой > false'
+document.body.append(button)
+button.addEventListener('click', () => {
+	const stateOfMouseControll = Player.players[0].toggleMouseControl()
+
+	button.innerText = `Управление мышкой > ${stateOfMouseControll}`
+})
 
 draw()
