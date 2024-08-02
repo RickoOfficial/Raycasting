@@ -1,5 +1,7 @@
-import { canvasSize } from '../globals'
+import { canvasSize, mousePosition } from '../globals'
 import { modifyContextByWorld, resetContextByWorld } from '../utils/draw'
+import { Events } from '../utils/Events'
+import { vectorToWorld } from '../utils/math'
 import { Random } from '../utils/Random'
 import { Vector2 } from '../utils/Vector2'
 import { WorldCell, WorldCellType } from './WorldCell'
@@ -28,7 +30,20 @@ export class World {
 
 		World.instance = this
 
+		this.attachEvents()
+
 		this.fillWorld()
+	}
+
+	private attachEvents() {
+		Events.on('contextmenu', (e: MouseEvent) => {
+			e.preventDefault()
+
+			const cell = World.getCell(...vectorToWorld(mousePosition()).floor().array())
+			if (cell) {
+				cell.changeType(cell.type === WorldCellType.EMPTY ? WorldCellType.WALL : WorldCellType.EMPTY)
+			}
+		})
 	}
 
 	getCell(x: number, y: number) {

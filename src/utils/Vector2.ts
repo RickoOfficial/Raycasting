@@ -56,7 +56,7 @@ export class Vector2 {
 	}
 
 	angleDegrees(): number {
-		return (this.angle() * 180) / Math.PI
+		return (this.angle() * (180 / Math.PI))
 	}
 
 	static fromAngle(angle: number): Vector2 {
@@ -64,7 +64,7 @@ export class Vector2 {
 	}
 
 	static fromAngleDegrees(angle: number): Vector2 {
-		return this.fromAngle((angle * Math.PI) / 180)
+		return this.fromAngle(angle * (Math.PI / 180))
 	}
 
 	dist(vector: Vector2): number

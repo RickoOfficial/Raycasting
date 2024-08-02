@@ -1,6 +1,7 @@
+import { CONTEXT } from '../globals'
 import { circle, line, modifyContextByWorld, resetContextByWorld } from '../utils/draw'
+import { Events } from '../utils/Events'
 import { GameObject } from '../utils/GameObject'
-import { throwRay } from '../utils/math'
 import { Ray } from '../utils/math/Ray'
 import { Vector2 } from '../utils/Vector2'
 import { World, WORLD_COLS, WORLD_ROWS } from './World'
@@ -14,17 +15,23 @@ export class Player extends GameObject {
 	private raysDotsOnWall: Vector2[] = []
 
 	private FOV = 90
-	private FOVRayCount = 180
+	private FOVRayCount = 360
 	private FOVRayStep = Math.abs((-this.FOV / 2 - this.FOV / 2) / this.FOVRayCount)
 
 	private mousePos: Vector2 = new Vector2(0, 0)
 	private prevMousePos: Vector2 = new Vector2(0, 0)
 
-	private keys: { [key: string]: boolean } = {}
+	private keys: Record<string, boolean> = {}
 
 	private rotateSpeed = 3
 	private moveSpeed = 0.05
 	private mouseSensitivity = 0.3
+
+	private mouseControlled = true
+
+	toggleMouseControl() {
+		this.mouseControlled = !this.mouseControlled
+	}
 
 	constructor(pos: Vector2, size: Vector2) {
 		super(pos, size)
@@ -35,15 +42,15 @@ export class Player extends GameObject {
 	}
 
 	attachEvents() {
-		window.addEventListener('keydown', (e) => {
+		Events.on('keydown', (e: KeyboardEvent) => {
 			this.keys[e.key.toLowerCase()] = true
 		})
 
-		window.addEventListener('keyup', (e) => {
+		Events.on('keyup', (e: KeyboardEvent) => {
 			this.keys[e.key.toLowerCase()] = false
 		})
 
-		window.addEventListener('mousemove', (e) => {
+		Events.on('mousemove', (e: MouseEvent) => {
 			if (this.prevMousePos.equals(new Vector2())) {
 				this.prevMousePos.set(e.clientX, e.clientY)
 			}
@@ -70,16 +77,24 @@ export class Player extends GameObject {
 	}
 
 	drawFOV(ctx: CanvasRenderingContext2D) {
-		ctx.fillStyle = '#f0f'
-		for (let i = 0; i < this.raysDots.length; i++) {
-			circle(ctx, ...this.raysDots[i].array(), this.size.x / 5)
-			ctx.fill()
-		}
+		// ctx.fillStyle = '#f0f'
+		// ctx.beginPath()
+		// for (let i = 0; i < this.raysDots.length; i++) {
+		// 	circle(ctx, ...this.raysDots[i].array(), this.size.x / 5, false)
+		// }
+		// ctx.closePath()
+		// ctx.fill()
 
-		ctx.fillStyle = '#0f0'
-		for (let i = 0; i < this.raysDotsOnWall.length; i++) {
-			circle(ctx, ...this.raysDotsOnWall[i].array(), this.size.x / 5)
-			ctx.fill()
+		if (this.raysDotsOnWall.length > 0) {
+			ctx.fillStyle = '#0f0'
+			ctx.beginPath()
+			line(ctx, ...this.pos.array(), ...this.raysDotsOnWall[0].array(), false)
+			for (let i = 1; i < this.raysDotsOnWall.length; i++) {
+				line(ctx, ...this.raysDotsOnWall[i - 1].array(), ...this.raysDotsOnWall[i].array(), false)
+			}
+			line(ctx, ...this.raysDotsOnWall.at(-1)!.array(), ...this.pos.array(), false)
+			ctx.closePath()
+			ctx.stroke()
 		}
 	}
 
@@ -90,9 +105,11 @@ export class Player extends GameObject {
 		if (this.keys['a'] || this.keys['ф']) this.viewAngle.rotateDegrees(-this.rotateSpeed)
 		if (this.keys['d'] || this.keys['в']) this.viewAngle.rotateDegrees(this.rotateSpeed)
 
-		this.viewAngle.rotateDegrees((this.mousePos.x - this.prevMousePos.x) * this.mouseSensitivity)
+		if (this.mouseControlled) {
+			this.viewAngle.rotateDegrees((this.mousePos.x - this.prevMousePos.x) * this.mouseSensitivity)
 
-		this.prevMousePos.set(...this.mousePos.array())
+			this.prevMousePos.set(...this.mousePos.array())
+		}
 		/**
 		 * /Повороты
 		 */
@@ -140,7 +157,9 @@ export class Player extends GameObject {
 		for (let i = -this.FOV / 2; i <= this.FOV / 2; i += this.FOVRayStep) {
 			const ray = new Ray(this.pos, this.viewAngle.copy().rotateDegrees(i))
 
-			while (this.raysDots.length < (WORLD_COLS * WORLD_ROWS * this.FOVRayCount) / this.FOV) {
+			while (true) {
+				if (this.raysDots.length + this.raysDotsOnWall.length >= Number.MAX_SAFE_INTEGER) throw new Error('Too many rays')
+
 				const newDot = ray.next()
 
 				const isOutOfBounds = newDot.isInBounds(new Vector2(0, 0), new Vector2(WORLD_COLS, WORLD_ROWS)) === false
@@ -161,44 +180,17 @@ export class Player extends GameObject {
 				this.raysDots.push(newDot)
 			}
 		}
-
-		// console.log(this.raysDots.at(-1));
-
-		// for (let i = -this.FOV / 2; i <= this.FOV / 2; i += this.FOVRayStep) {
-		// 	const ray = throwRay(this.pos, this.viewAngle.copy().rotateDegrees(i).angle())
-
-		// 	while (this.raysDots.length < WORLD_COLS * WORLD_ROWS * this.FOVRayCount) {
-		// 		const newDot = ray()
-
-		// 		const isOutOfBounds = newDot.isInBounds(new Vector2(0, 0), new Vector2(WORLD_COLS, WORLD_ROWS)) === false
-
-		// 		const cell = World.getCell(...newDot.copy().floor().array())
-		// 		const isWall = cell instanceof WorldCell ? cell.type === WorldCellType.WALL : false
-
-		// 		if (isOutOfBounds) break
-
-		// 		if (isWall) {
-		// 			if (this.raysDots.at(-1) instanceof Vector2) {
-		// 				this.raysDotsOnWall.push(this.raysDots.at(-1)!)
-		// 			}
-
-		// 			break
-		// 		}
-
-		// 		this.raysDots.push(newDot)
-		// 	}
-		// }
 	}
 
 	pullOutFromWall() {
 		const nearCells: Vector2[] = []
 		const nearCellsDist: number[] = []
 
-		for (let i = -180; i < 180; i += 360 / 36) {
-			const ray = throwRay(this.pos, this.viewAngle.angle() + i)
+		for (let i = 0; i < 360; i += 360 / 36) {
+			const ray = new Ray(this.pos, Vector2.fromAngleDegrees(i))
 
 			for (let j = 0; j < 10; j++) {
-				const dot = ray().add(Vector2.fromAngle(i).div(10))
+				const dot = ray.next().add(Vector2.fromAngle(i).div(10))
 
 				if (World.getCell(...dot.copy().floor().array())?.type === WorldCellType.EMPTY) {
 					nearCells.push(dot)
@@ -207,6 +199,16 @@ export class Player extends GameObject {
 			}
 		}
 
+		modifyContextByWorld(CONTEXT)
+		CONTEXT.fillStyle = '#f00'
+		CONTEXT.beginPath()
+		for (let i = 0; i < nearCells.length; i++) {
+			circle(CONTEXT, ...nearCells[i].array(), 0.03)
+			CONTEXT.fill()
+		}
+		CONTEXT.closePath()
+		resetContextByWorld(CONTEXT)
+
 		const minDist = Math.min(...nearCellsDist)
 		const minDistIndex = nearCellsDist.indexOf(minDist)
 		const newPos = nearCells[minDistIndex]
@@ -214,3 +216,6 @@ export class Player extends GameObject {
 		this.pos.set(newPos)
 	}
 }
+
+// @ts-ignore
+window['Player'] = Player

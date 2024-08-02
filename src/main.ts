@@ -32,7 +32,7 @@ const draw = (timestamp?: number) => {
 
 	CONTEXT.font = '16px monospace'
 	CONTEXT.fillStyle = '#fff'
-	CONTEXT.fillText(fps.toFixed(2), 16, 16)
+	CONTEXT.fillText(Math.round(fps).toString(), 16, 16)
 
 	requestAnimationFrame(draw)
 }

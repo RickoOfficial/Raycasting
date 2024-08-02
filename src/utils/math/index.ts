@@ -1,8 +1,14 @@
 import { WORLD_COLS, WORLD_POS, WORLD_ROWS, WORLD_SIZE } from '../../gameObjects/World'
 import { Vector2 } from '../Vector2'
+import { Ray } from './Ray'
 
 export const EPSILON = 1e-6
 
+/**
+ * Преобразует координаты мира в координаты экрана.
+ * @param {Vector2} pos - Координаты мира.
+ * @returns {Vector2} Копия координат экрана.
+ */
 export const vectorToWorld = (pos: Vector2) => {
 	return pos
 		.copy()
@@ -17,7 +23,7 @@ export const snap = (x: number, dx: number) => {
 }
 
 /**
- * ! Deprecated
+ * @deprecated Use {@link Ray}
  */
 export const throwRay = (startPos: Vector2, angle: number) => {
 	const dots: Vector2[] = []
